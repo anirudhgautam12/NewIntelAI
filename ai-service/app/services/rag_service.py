@@ -1,11 +1,8 @@
 import os
 import json
-import faiss
-import numpy as np
 from fastapi import HTTPException
 from ..core.config import settings
 from .preprocessing_service import get_spacy_model
-from .embedding_service import get_embedding_model
 from .llm_client import get_llm_answer
 
 def chunk_article_text(text: str) -> list:
@@ -53,6 +50,10 @@ def create_and_save_index(article_id: str, text: str) -> list:
         chunk_texts = [c["text"] for c in chunks]
 
         # 2. Extract embeddings
+        import numpy as np
+        import faiss
+        from .embedding_service import get_embedding_model
+
         model = get_embedding_model()
         embeddings = model.encode(chunk_texts, show_progress_bar=False)
         embeddings_np = np.array(embeddings).astype('float32')
@@ -105,6 +106,10 @@ def query_article_rag(article_id: str, text: str, question: str) -> dict:
             ) from e
 
     try:
+        import faiss
+        import numpy as np
+        from .embedding_service import get_embedding_model
+
         # Load pre-existing FAISS index
         index = faiss.read_index(index_file)
     except Exception as e:
