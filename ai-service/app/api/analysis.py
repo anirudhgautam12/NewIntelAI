@@ -12,9 +12,6 @@ from ..models.schemas import (
 from ..core.config import settings
 from ..services.article_extractor_service import extract_article
 from ..services.preprocessing_service import preprocess_text
-from ..services.summarization_service import summarize_article
-from ..services.sentiment_service import analyze_sentiment
-from ..services.keyword_service import extract_keywords
 from ..services.ner_service import extract_entities
 from ..services.llm_analysis_service import analyze_with_llm
 
@@ -66,12 +63,15 @@ def analyze_article_endpoint(request: ArticleAnalysisRequest):
             except Exception as llm_err:
                 print(f"[AI Service] LLM analysis failed, falling back to local models: {llm_err}")
 
-        # Fallback to local Hugging Face / KeyBERT models if LLM was skipped or failed
+        # Fallback to local Hugging Face / KeyBERT models only if LLM was skipped or failed
         if not summaries:
+            from ..services.summarization_service import summarize_article
             summaries = summarize_article(request.article_text)
         if not sentiment_data:
+            from ..services.sentiment_service import analyze_sentiment
             sentiment_data = analyze_sentiment(request.article_text)
         if not keywords_data:
+            from ..services.keyword_service import extract_keywords
             keywords_data = extract_keywords(request.article_text)
 
         # 6. Compute statistics based on raw input and chosen summary length
