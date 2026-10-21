@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  
+  --color-brand-bg: #030712;
+  --color-brand-surface: #0b1329;
+  --color-brand-surface-elevated: #111a36;
+  --color-brand-border: #1e293b;
+  --color-brand-accent: #6366f1;
+  --color-brand-accent-hover: #4f46e5;
+  --color-brand-accent-glow: rgba(99, 102, 241, 0.15);
+}
+
+body {
+  background-color: #030712;
+  color: #f3f4f6;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #030712;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Custom indeterminate progress bar animations */
+@keyframes loading-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-loading-slide {
+  animation: loading-slide 2s infinite ease-in-out;
+}
+
+/* Background pulse glow */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(1.1);
+  }
+}
+
+.bg-glow-indigo {
+  background: radial-gradient(circle, rgba(99,102,241,0.2) 0%, rgba(0,0,0,0) 70%);
+  filter: blur(80px);
+  animation: pulse-glow 8s infinite ease-in-out;
+}
+
+/* Glassmorphism style utility */
+.glass-panel {
+  background: rgba(11, 19, 41, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(30, 41, 59, 0.7);
+}
