@@ -9,9 +9,12 @@ import { ApiError } from './utils/ApiError.js';
 
 const app = express();
 
-// Configure CORS to allow requests from client url or common vite dev ports
+// Clean and normalize clientUrl (remove trailing slash if present)
+const configuredClientUrl = config.clientUrl ? config.clientUrl.replace(/\/+$/, '') : '';
+
+// Configure CORS to allow requests from client url, local dev, or vercel preview/prod domains
 const allowedOrigins = [
-  config.clientUrl,
+  configuredClientUrl,
   'http://localhost:5173',
   'http://localhost:5174',
   'http://127.0.0.1:5173',
@@ -21,10 +24,21 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // allow requests with no origin (like mobile apps, curl, postman)
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+      if (!origin) {
         return callback(null, true);
       }
+
+      const normalizedOrigin = origin.replace(/\/+$/, '');
+
+      // Check explicit allowed list or any Vercel domain (*.vercel.app)
+      if (
+        allowedOrigins.includes(normalizedOrigin) ||
+        /^https:\/\/([a-zA-Z0-9_-]+\.)?vercel\.app$/.test(normalizedOrigin)
+      ) {
+        return callback(null, true);
+      }
+
       return callback(new Error(`CORS origin ${origin} not allowed`));
     },
     credentials: true
