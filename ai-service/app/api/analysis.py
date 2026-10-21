@@ -9,12 +9,14 @@ from ..models.schemas import (
     KeywordResponse,
     EntityResponse
 )
+from ..core.config import settings
 from ..services.article_extractor_service import extract_article
 from ..services.preprocessing_service import preprocess_text
 from ..services.summarization_service import summarize_article
 from ..services.sentiment_service import analyze_sentiment
 from ..services.keyword_service import extract_keywords
 from ..services.ner_service import extract_entities
+from ..services.llm_analysis_service import analyze_with_llm
 
 router = APIRouter()
 
@@ -40,23 +42,37 @@ def extract_article_endpoint(request: ArticleExtractionRequest):
 @router.post("/analyze", response_model=ArticleAnalysisResponse)
 def analyze_article_endpoint(request: ArticleAnalysisRequest):
     """
-    HTTP POST endpoint to run the entire local NLP pipeline over a news text.
+    HTTP POST endpoint to run the NLP pipeline over a news text.
+    Uses ultra-fast LLM (Gemini) when enabled (default) or falls back to local models.
     """
     try:
-        # 1. Core NLP Preprocessing (lemmatization and stopword removal)
+        # 1. Core NLP Preprocessing (spaCy lightweight lemmatization)
         processed_text = preprocess_text(request.article_text)
 
-        # 2. Local BART Transformer Summarization
-        summaries = summarize_article(request.article_text)
-
-        # 3. Local RoBERTa 3-Class Sentiment Classification
-        sentiment_data = analyze_sentiment(request.article_text)
-
-        # 4. Local KeyBERT Keyword Extraction
-        keywords_data = extract_keywords(request.article_text)
-
-        # 5. Local spaCy Named Entity Recognition
+        # 2. Local spaCy Named Entity Recognition (lightweight ~15MB RAM)
         entities_data = extract_entities(request.article_text)
+
+        summaries = None
+        sentiment_data = None
+        keywords_data = None
+
+        # Prefer LLM analysis if enabled (avoids loading 2GB PyTorch models into 512MB RAM)
+        if getattr(settings, "USE_LLM_ANALYSIS", True) and settings.LLM_API_KEY:
+            try:
+                llm_result = analyze_with_llm(request.article_text)
+                summaries = llm_result["summary"]
+                sentiment_data = llm_result["sentiment"]
+                keywords_data = llm_result["keywords"]
+            except Exception as llm_err:
+                print(f"[AI Service] LLM analysis failed, falling back to local models: {llm_err}")
+
+        # Fallback to local Hugging Face / KeyBERT models if LLM was skipped or failed
+        if not summaries:
+            summaries = summarize_article(request.article_text)
+        if not sentiment_data:
+            sentiment_data = analyze_sentiment(request.article_text)
+        if not keywords_data:
+            keywords_data = extract_keywords(request.article_text)
 
         # 6. Compute statistics based on raw input and chosen summary length
         original_words = len(request.article_text.strip().split())

@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     LLM_API_KEY: str = Field(default="")
     LLM_MODEL: str = Field(default="")
     VECTOR_STORE_PATH: str = Field(default="./vector_store")
+    USE_LLM_ANALYSIS: bool = Field(default=True)
 
     class Config:
         env_file = ".env"
