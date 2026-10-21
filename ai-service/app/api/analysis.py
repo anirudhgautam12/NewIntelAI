@@ -63,16 +63,31 @@ def analyze_article_endpoint(request: ArticleAnalysisRequest):
             except Exception as llm_err:
                 print(f"[AI Service] LLM analysis failed, falling back to local models: {llm_err}")
 
-        # Fallback to local Hugging Face / KeyBERT models only if LLM was skipped or failed
+        # Only fall back to local 2GB Hugging Face models if explicitly running locally without LLM
         if not summaries:
-            from ..services.summarization_service import summarize_article
-            summaries = summarize_article(request.article_text)
+            if not settings.LLM_API_KEY:
+                from ..services.summarization_service import summarize_article
+                summaries = summarize_article(request.article_text)
+            else:
+                raise HTTPException(status_code=502, detail="LLM analysis could not complete. Please check API quota or try again in a moment.")
+
         if not sentiment_data:
-            from ..services.sentiment_service import analyze_sentiment
-            sentiment_data = analyze_sentiment(request.article_text)
+            if not settings.LLM_API_KEY:
+                from ..services.sentiment_service import analyze_sentiment
+                sentiment_data = analyze_sentiment(request.article_text)
+            else:
+                sentiment_data = {
+                    "label": "NEUTRAL",
+                    "confidence": 0.5,
+                    "scores": {"positive": 0.33, "neutral": 0.34, "negative": 0.33}
+                }
+
         if not keywords_data:
-            from ..services.keyword_service import extract_keywords
-            keywords_data = extract_keywords(request.article_text)
+            if not settings.LLM_API_KEY:
+                from ..services.keyword_service import extract_keywords
+                keywords_data = extract_keywords(request.article_text)
+            else:
+                keywords_data = []
 
         # 6. Compute statistics based on raw input and chosen summary length
         original_words = len(request.article_text.strip().split())
