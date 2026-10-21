@@ -46,11 +46,18 @@ Article Text:
 """
     raw_response = get_llm_answer(prompt)
     
-    # Clean potential markdown fences (e.g. ```json ... ```)
-    cleaned = re.sub(r'^```(?:json)?\s*', '', raw_response.strip(), flags=re.MULTILINE)
-    cleaned = re.sub(r'\s*```$', '', cleaned.strip(), flags=re.MULTILINE)
-    
-    parsed = json.loads(cleaned)
+    # Extract JSON block even if model wraps in codeblocks or prefixes text
+    json_match = re.search(r'\{.*\}', raw_response, re.DOTALL)
+    if json_match:
+        json_str = json_match.group(0)
+    else:
+        json_str = raw_response.strip()
+
+    try:
+        parsed = json.loads(json_str)
+    except Exception as parse_err:
+        print(f"[AI Service] JSON parse error: {parse_err}. Raw text: {raw_response[:200]}")
+        raise ValueError(f"Failed to parse LLM JSON: {parse_err}")
     
     # Validate and normalize keys
     summaries = parsed.get("summary", {})
