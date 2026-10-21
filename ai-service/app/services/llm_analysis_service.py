@@ -42,7 +42,7 @@ Requirements:
 4. Respond ONLY with the JSON object. Do NOT wrap in markdown formatting (like ```json), do NOT add introductory or concluding text.
 
 Article Text:
-{article_text}
+{article_text[:50000]}
 """
     raw_response = get_llm_answer(prompt)
     

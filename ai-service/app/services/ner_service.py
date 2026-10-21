@@ -12,7 +12,10 @@ def extract_entities(text: str) -> list:
 
     try:
         nlp = get_spacy_model()
-        doc = nlp(text)
+        # Cap to 40,000 chars for NER to ensure fast extraction on free tier CPU
+        text_sample = text[:40000]
+        with nlp.select_pipes(disable=["parser"]):
+            doc = nlp(text_sample)
 
         # Approved labels according to the requirements
         allowed_labels = {"PERSON", "ORG", "GPE", "LOC", "DATE", "MONEY", "EVENT", "PRODUCT"}

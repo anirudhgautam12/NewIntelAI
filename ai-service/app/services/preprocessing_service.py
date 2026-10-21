@@ -40,8 +40,12 @@ def preprocess_text(text: str) -> str:
 
     # 3. Process with spaCy for advanced NLP cleaning (Stopword, Punctuation removal, Lemmatization)
     try:
+        # Limit text for tokenization/lemmatization if it is massive to avoid CPU timeout
+        sample_text = normalized_text[:30000]
         nlp = get_spacy_model()
-        doc = nlp(normalized_text)
+        # Disable parser and ner during lemmatization to run 10x faster
+        with nlp.select_pipes(disable=["parser", "ner"]):
+            doc = nlp(sample_text)
 
         cleaned_tokens = []
         for token in doc:
