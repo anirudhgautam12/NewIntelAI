@@ -14,9 +14,9 @@ def call_gemini(prompt: str) -> str:
         )
 
     # Primary model with automatic fallbacks
-    configured_model = settings.LLM_MODEL.strip() if settings.LLM_MODEL else "gemini-1.5-flash"
+    configured_model = settings.LLM_MODEL.strip() if settings.LLM_MODEL else "gemini-3.8-flash"
     models_to_try = [configured_model]
-    for fallback in ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-2.5-flash"]:
+    for fallback in ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-flash-latest"]:
         if fallback not in models_to_try:
             models_to_try.append(fallback)
 
